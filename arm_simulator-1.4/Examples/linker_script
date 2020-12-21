@@ -1,0 +1,11 @@
+MEMORY
+  {
+    rom (rx)   : ORIGIN = 0x20, LENGTH = 8K
+    ram (wail) : ORIGIN = 10K, LENGTH = 8K
+  }
+
+SECTIONS
+  {
+    .text : { *(.text) } > rom
+    .data : { *(.data) } > ram
+  }

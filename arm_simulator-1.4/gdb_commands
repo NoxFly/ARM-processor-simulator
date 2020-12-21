@@ -1,0 +1,4 @@
+target remote localhost:58000
+load
+cont
+quit
