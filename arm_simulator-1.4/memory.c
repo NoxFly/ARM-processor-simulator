@@ -25,10 +25,18 @@ Contact: Guillaume.Huard@imag.fr
 #include "util.h"
 
 struct memory_data {
+	uint8_t* values;
+	size_t size;
+	int is_big_endian;
 };
 
 memory memory_create(size_t size, int is_big_endian) {
-    memory mem=NULL;
+    memory mem=malloc(sizeof(struct memory_data));
+	
+	mem->size=size;
+	mem->is_big_endian=is_big_endian;
+	mem->values=malloc(sizeof(uint8_t)*size);
+	
     return mem;
 }
 
@@ -40,7 +48,9 @@ void memory_destroy(memory mem) {
 }
 
 int memory_read_byte(memory mem, uint32_t address, uint8_t *value) {
-    return -1;
+	*value = mem->values[address];
+	
+    return 0;
 }
 
 int memory_read_half(memory mem, uint32_t address, uint16_t *value) {
