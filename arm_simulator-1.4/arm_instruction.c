@@ -28,7 +28,50 @@ Contact: Guillaume.Huard@imag.fr
 #include "arm_constants.h"
 #include "util.h"
 
+void affichebin(unsigned n)
+{
+	unsigned bit = 0 ;
+	unsigned mask = 0x80000000 ;
+	for (int i = 31 ; i >= 0 ; i--)
+	{
+		bit = (n & mask) >> i ;
+		printf("%d", bit) ;
+		mask >>= 1 ;
+	}
+}
+
 static int arm_execute_instruction(arm_core p) {
+	uint32_t inst;
+	uint8_t instType;
+	int res = arm_fetch(p, &inst);
+	
+	if(res != 0)
+		return PREFETCH_ABORT;
+	
+	instType = (uint8_t)((inst & 0x0E000000) >> 25);
+	switch(instType) {
+		case 0:
+			if(get_bit(inst, 4) == 1 && get_bit(inst, 7) == 1) {
+				return arm_load_store(p, inst);
+			}
+			else {
+				return arm_data_processing_shift(p, inst);
+			}
+		case 1:
+			return arm_data_processing_immediate_msr(p, inst);
+		case 2:
+		case 3:
+			return arm_load_store(p, inst);
+		case 4:
+			return arm_load_store_multiple(p, inst);
+		case 6:
+			return arm_coprocessor_load_store(p, inst);
+		case 5:
+			return arm_branch(p, inst);
+		case 7:
+			return arm_coprocessor_others_swi(p, inst);
+	}
+	
     return 0;
 }
 
