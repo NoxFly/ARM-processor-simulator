@@ -48,7 +48,8 @@ static int arm_execute_instruction(arm_core p) {
 	if(res != 0)
 		return PREFETCH_ABORT;
 	
-	instType = (uint8_t)((inst & 0x0E000000) >> 25);
+	instType = get_bits(inst, 27, 25);
+	//instType = (uint8_t)((inst & 0x0E000000) >> 25);
 	switch(instType) {
 		case 0:
 			if(get_bit(inst, 4) == 1 && get_bit(inst, 7) == 1) {
