@@ -100,12 +100,12 @@ int memory_write_half(memory mem, uint32_t address, uint16_t value) {
         return -1;
     }
     if(mem->is_big_endian){
-        mem->values[address] = (uint8_t) value >> 8;
+        mem->values[address] = (uint8_t) (value >> 8);
         mem->values[address+1] = (uint8_t) value;
     }
     else{
         mem->values[address] = (uint8_t) value;
-        mem->values[address+1] = (uint8_t) value >> 8;
+        mem->values[address+1] = (uint8_t) (value >> 8);
     }
     return 0;
 }
@@ -115,16 +115,16 @@ int memory_write_word(memory mem, uint32_t address, uint32_t value) {
         return -1;
     }
     if(mem->is_big_endian){
-        mem->values[address] = (uint8_t) value >> 24;
-        mem->values[address+1] = (uint8_t) value >> 16;
-        mem->values[address+2] = (uint8_t) value >> 8;
+        mem->values[address] = (uint8_t) (value >> 24);
+        mem->values[address+1] = (uint8_t) (value >> 16);
+        mem->values[address+2] = (uint8_t) (value >> 8);
         mem->values[address+3] = (uint8_t) value;
     }
     else{
-        mem->values[address +3] = (uint8_t) value >> 24;
-        mem->values[address+2] = (uint8_t) value >> 8;
-        mem->values[address+1] = (uint8_t) value >> 16;
-        mem->values[address] = (uint8_t) value >> 24;
+        mem->values[address+3] = (uint8_t) (value >> 24);
+        mem->values[address+2] = (uint8_t) (value >> 16);
+        mem->values[address+1] = (uint8_t) (value >> 8);
+        mem->values[address] = (uint8_t) value;
     }
     return 0;
 }
