@@ -28,25 +28,88 @@ Contact: Guillaume.Huard@imag.fr
 #include "arm_constants.h"
 #include "util.h"
 
-void affichebin(unsigned n)
-{
-	unsigned bit = 0 ;
-	unsigned mask = 0x80000000 ;
-	for (int i = 31 ; i >= 0 ; i--)
-	{
-		bit = (n & mask) >> i ;
-		printf("%d", bit) ;
-		mask >>= 1 ;
+uint8_t arm_decode_condition[224];
+uint8_t arm_decode_condition_init = 0;
+
+void init_decode_condition() {
+	if(!arm_decode_condition_init) {
+		arm_decode_condition_init = 1;
+		
+		for(int condCounter = 0 ; condCounter < 14 ; condCounter++) {
+			for(int flagCounter = 0 ; flagCounter < 16 ; flagCounter++) {
+				int res = 0;
+				switch(condCounter) {
+					case 0b0000:
+						res = (flagCounter & 0b0100) != 0;
+						break;
+					case 0b0001:
+						res = (flagCounter & 0b0100) == 0;
+						break;
+					case 0b0010:
+						res = (flagCounter & 0b0010) != 0;
+						break;
+					case 0b0011:
+						res = (flagCounter & 0b0010) == 0;
+						break;
+					case 0b0100:
+						res = (flagCounter & 0b1000) != 0;
+						break;
+					case 0b0101:
+						res = (flagCounter & 0b1000) == 0;
+						break;
+					case 0b0110:
+						res = (flagCounter & 0b0001) != 0;
+						break;
+					case 0b0111:
+						res = (flagCounter & 0b0001) == 0;
+						break;
+					case 0b1000:
+						res = (flagCounter & 0b0110) == 0b0010;
+						break;
+					case 0b1001:
+						res = (flagCounter & 0b0100) != 0 || (flagCounter & 0b0010) == 0;
+						break;
+					case 0b1010:
+						res = ((flagCounter & 0b1000) >> 3) == (flagCounter & 0b0001);
+						break;
+					case 0b1011:
+						res = ((flagCounter & 0b1000) >> 3) != (flagCounter & 0b0001);
+						break;
+					case 0b1100:
+						res = ((flagCounter & 0b1000) >> 3) == (flagCounter & 0b0001) && (flagCounter & 0b0100) == 0;
+						break;
+					case 0b1101:
+						res = ((flagCounter & 0b1000) >> 3) != (flagCounter & 0b0001) || (flagCounter & 0b0100) != 0;
+						break;
+				}
+				arm_decode_condition[(condCounter<<4)|flagCounter] = res;
+			}
+		}
 	}
 }
 
 static int arm_execute_instruction(arm_core p) {
 	uint32_t inst;
-	uint8_t instType;
+	uint8_t instType, cond, flags;
 	int res = arm_fetch(p, &inst);
 	
 	if(res != 0)
 		return PREFETCH_ABORT;
+	
+	
+	cond =  get_bits(inst, 31, 28);
+	
+	if (cond == 0b1111)
+		return UNDEFINED_INSTRUCTION;
+	
+	if(cond != 0b1110) {
+		flags = get_bits(arm_read_cpsr(p), 31, 28);
+		init_decode_condition();
+		
+		if(!arm_decode_condition[(cond<<4)|flags]) {
+			return 0;
+		}
+	}
 	
 	instType = get_bits(inst, 27, 25);
 	switch(instType) {
