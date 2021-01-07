@@ -6,10 +6,15 @@ This is a university project (first semester of third year).
 
 This project is done by a group of 6 members.
 
-Members of the group :
+__Our members__ :
 
 [Dorian Thivolle](https://github.com/NoxFly/), [Dorian Lorek](https://github.com/EloGamerr), [Lilian Russo](https://github.com/Leer0r),
 [Clément Corbillé](https://github.com/corbillc), [Etienne Gabert](https://github.com/MiniGabert), [Arthur Ducros](https://github.com/SpyciBear).
+
+__Roles repartition__ :
+
+Dorian Thivolle : Lead developer
+All others : developers
 
 ## Branches
 
@@ -23,17 +28,17 @@ The given code in this repository isn't complete. We've added some folders in th
 
 If you have the missing folders + Makefile, you can execute the code doing the following steps :
 
-- Ensure you have a cross compiler: install it with these two cli commands :
+- __Ensure you have a cross compiler__: install it with these two cli commands :
     - `sudo apt-get install libc6-armel-cross libc6-dev-armel-cross binutils-arm-linux-gnueabi libncurses5-dev build-essential bison flex libssl-dev bc`
     - `sudo apt-get install gcc-arm-linux-gnueabi g++-arm-linux-gnueabi`
-- Configure and compile the code : go on `arm_simulator-1.4` folder, then write :
+- __Configure and compile the code__ : go on `arm_simulator-1.4` folder, then write :
     - `./configure CFLAGS='-Wall -Werror -g'`
     - then if it succeed, write `make`
-- Finally, execute the created executable : `./arm_simulator`
+- Finally, __execute the created executable__ : `./arm_simulator`
 
 Once the simulator is started, you'll see 2 port's numbers.
 
-Open a new terminal, and do following steps to connect to server side :
+Open a second terminal, and do following steps to connect to the server side :
 - write `gdb-multiarch` on the same folder
 - write `file Examples/example1` (for example, to focus exemple1 file)
 - write `target remote localhost:<simulator's given port>`
