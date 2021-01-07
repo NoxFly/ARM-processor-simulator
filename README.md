@@ -14,6 +14,7 @@ __Our members__ :
 __Roles repartition__ :
 
 Dorian Thivolle : Lead developer
+
 All others : developers
 
 ## Branches
