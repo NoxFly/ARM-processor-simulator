@@ -28,12 +28,16 @@ Contact: Guillaume.Huard@imag.fr
 
 
 int arm_branch(arm_core p, uint32_t ins) {
-    uint32_t adress;
+    int32_t adress;
     if(get_bit(ins, 24)){ // Bit 24 --> BL (voir doc ARM A4.1.5), on stocke la valeur dans LR (R14)
-        arm_write_register(p, 14, arm_read_register(p, 15)); //MOV PC LR
+        arm_write_register(p, 14, arm_read_register(p, 15)-4); //MOV PC LR
     }
-    adress = get_bits(ins, 23, 0) << 2; // voir operation dans la doc ARM A4.11
-    arm_write_register(p, 15, arm_read_register(p, 15) + adress);
+	adress = get_bits(ins, 23, 0);// voir operation dans la doc ARM A4.11
+	if(get_bit(ins, 23)) {
+		adress = -(((~(adress << 8)) >> 8) + 1);
+	}
+	printf("test1 %d\n", adress);
+    arm_write_register(p, 15, arm_read_register(p, 15) + (adress << 2));
 
     return 0;
 }
