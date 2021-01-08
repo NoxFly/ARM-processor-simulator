@@ -29,11 +29,11 @@ Contact: Guillaume.Huard@imag.fr
 
 int arm_branch(arm_core p, uint32_t ins) {
     uint32_t adress;
-    if(get_bit(ins,24)){ // Bit 24 --> BL (voir doc ARM A4.1.5), on stocke la valeur dans LR (R14)
-        arm_write_register(p,14,arm_read_register(p,15)); //MOV PC R14
+    if(get_bit(ins, 24)){ // Bit 24 --> BL (voir doc ARM A4.1.5), on stocke la valeur dans LR (R14)
+        arm_write_register(p, 14, arm_read_register(p, 15)); //MOV PC LR
     }
-    uint32_t range_adress = get_bits(ins,23,0)<<2; // voir operation dans la doc ARM A4.11
-    arm_write_register(p,15,arm_read_register(p,15) + range_adress);
+    uint32_t range_adress = get_bits(ins, 23, 0) << 2; // voir operation dans la doc ARM A4.11
+    arm_write_register(p, 15, arm_read_register(p, 15) + range_adress);
 
     return 0;
 }
@@ -48,6 +48,6 @@ int arm_coprocessor_others_swi(arm_core p, uint32_t ins) {
     return UNDEFINED_INSTRUCTION;
 }
 
-int arm_miscellaneous(arm_core p, uint32_t ins) {
+int arm_miscellaneous(arm_core p, uint32_t ins) { //Reference à A3.8 de la doc ARM
     return UNDEFINED_INSTRUCTION;
 }
