@@ -36,7 +36,7 @@ int getCarryFlag(uint32_t left, uint32_t right, char operand) {
 		int leftBit = get_bit(left, i);
 		int rightBit = get_bit(right, i);
 
-		int res = leftBit + (operand=='+' ? rightBit : -rightBit) + cFlag;
+		int res = leftBit + (operand=='+' ? rightBit+cFlag : -rightBit-cFlag);
 
 		if(operand == '+' && res > 1) {
 			cFlag = 1;
