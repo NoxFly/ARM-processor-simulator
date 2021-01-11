@@ -25,13 +25,13 @@ Contact: Guillaume.Huard@imag.fr
 #include <stdint.h>
 
 /* ARM Modes */
-#define USR 0
-#define FIQ 1
-#define IRQ 2
-#define SVC 3
-#define ABT 4
-#define UND 5
-#define SYS 6
+#define USR 0b10000//16
+#define FIQ 0b10001
+#define IRQ 0b10010
+#define SVC 0b10011
+#define ABT 0b10111
+#define UND 0b11011
+#define SYS 0b11111//31
 
 /* ARM Exceptions (by priority) */
 #define RESET                   1
