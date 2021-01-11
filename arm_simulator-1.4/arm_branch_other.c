@@ -36,7 +36,7 @@ int arm_branch(arm_core p, uint32_t ins) {
 	if(get_bit(ins, 23)) {
 		adress = -(((~(adress << 8)) >> 8) + 1);
 	}
-	printf("test1 %d\n", adress);
+
     arm_write_register(p, 15, arm_read_register(p, 15) + (adress << 2));
 
     return 0;
@@ -52,6 +52,15 @@ int arm_coprocessor_others_swi(arm_core p, uint32_t ins) {
     return UNDEFINED_INSTRUCTION;
 }
 
-int arm_miscellaneous(arm_core p, uint32_t ins) { //Reference à A3.8 de la doc ARM
-    return UNDEFINED_INSTRUCTION;
+int arm_miscellaneous(arm_core p, uint32_t ins) { //Reference à A4.1.38 de la doc ARM
+	int rd = get_bits(ins, 15, 12);
+
+	if(get_bit(ins, 22)) {
+		arm_write_register(p, rd, arm_read_spsr(p));
+	}
+	else {
+		arm_write_register(p, rd, arm_read_cpsr(p));
+	}
+
+    return 0;
 }
