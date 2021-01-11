@@ -22,19 +22,27 @@ Contact: Guillaume.Huard@imag.fr
 */
 #ifndef __ARM_LOAD_STORE_H__
 #define __ARM_LOAD_STORE_H__
+
 #include <stdint.h>
 #include "arm_core.h"
+
+#define p(ins)(get_bit(ins, 24))
+#define w(ins)(get_bit(ins, 21))
+
 uint8_t condition_passed(arm_core proc, uint32_t ins);
 uint32_t op(uint32_t ins, uint32_t left_op, uint32_t right_op);
 uint8_t nb_set_bits(uint16_t nb);
 uint32_t set_offset(uint32_t ins);
 uint32_t set_index(arm_core proc, uint32_t ins, uint8_t rm);
+
 void load_store(arm_core proc, uint32_t ins, uint32_t *address, uint32_t *rn, uint32_t add_value);
 void load_store_multiple(arm_core proc, uint32_t ins, uint32_t *start_address,uint32_t *end_address, uint32_t *rn);
 void load_store_miscellaneous(arm_core proc, uint32_t ins, uint32_t *address, uint32_t *rn, uint32_t offset);
+
 uint8_t executeInstr_miscellaneous(arm_core proc, uint32_t ins, uint32_t address);
 uint8_t executeInstr_word_byte(arm_core proc, uint32_t ins, uint32_t address);
-uint8_t executeInstr_multiple(arm_core proc, uint32_t ins, uint32_t *address, uint32_t start_address, uint32_t end_address);
+uint8_t executeInstr_multiple(arm_core proc, uint32_t ins, uint32_t start_address, uint32_t end_address);
+
 int arm_load_store(arm_core p, uint32_t ins);
 int arm_load_store_multiple(arm_core p, uint32_t ins);
 int arm_coprocessor_load_store(arm_core p, uint32_t ins);
