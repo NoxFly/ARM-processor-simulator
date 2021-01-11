@@ -36,7 +36,7 @@ int getCarryFlag(uint32_t left, uint32_t right, char operand) {
 		int leftBit = get_bit(left, i);
 		int rightBit = get_bit(right, i);
 
-		int res = leftBit + (operand=='+' ? rightBit : -rightBit) + cFlag;
+		int res = leftBit + (operand=='+' ? rightBit+cFlag : -rightBit-cFlag);
 
 		if(operand == '+' && res > 1) {
 			cFlag = 1;
@@ -156,21 +156,21 @@ int executeInst(int opcode, arm_core p, int rd, uint32_t valueRn, uint32_t shift
 			break;
 		case 0b1000: // TST
 			res = valueRn && shifter_operand;
-			updateForTest(updateCPSR, write_register);
+			updateForTest(&updateCPSR, &write_register);
 			break;
 		case 0b1001: // TEQ
 			res = (valueRn || shifter_operand) && !(valueRn && shifter_operand);
-			updateForTest(updateCPSR, write_register);
+			updateForTest(&updateCPSR, &write_register);
 			break;
 		case 0b1010: // CMP
 			res = valueRn - shifter_operand;
-			updateForTest(updateCPSR, write_register);
+			updateForTest(&updateCPSR, &write_register);
 			cFlag = getCarryFlagSub(valueRn, shifter_operand);
 			vFlag = getOverflowFlagSub(res, valueRn, shifter_operand);
 			break;
 		case 0b1011: // CMN
 			res = valueRn + shifter_operand;
-			updateForTest(updateCPSR, write_register);
+			updateForTest(&updateCPSR, &write_register);
 			cFlag = getCarryFlagAdd(shifter_operand, valueRn);
 			vFlag = getOverflowFlagAdd(res, valueRn, shifter_operand);
 			break;
@@ -210,7 +210,7 @@ int executeInst(int opcode, arm_core p, int rd, uint32_t valueRn, uint32_t shift
 }
 
 int getShifterOperand(int so, int si, char* operand) {
-	char* operands = { "lsl", "lsr", "asr", "ror" };
+	char* operands[4] = { "lsl", "lsr", "asr", "ror" };
 	
 	int k = -1;
 
