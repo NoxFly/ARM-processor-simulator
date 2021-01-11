@@ -22,23 +22,23 @@ Contact: Guillaume.Huard@imag.fr
 */
 #include "registers.h"
 #include "arm_constants.h"
+#include "util.h"
 #include <stdlib.h>
-#include <stdio.h>
 
 #define NB_REGISTER 37
 
-uint8_t arm_mode_register[208];
+uint8_t arm_mode_register[512];
 uint8_t arm_mode_register_init = 0;
 
 void init() {
     if(!arm_mode_register_init) {
 		arm_mode_register_init = 1;
 		
-		for(int mode = 0 ; mode < 7 ; mode++) {
+		for(int mode = 0 ; mode < 16 ; mode++) {
 			for(int reg = 0 ; reg < 17 ; reg++) { // register = 16 -> CPSR ; register = 17 -> SPSR
 				uint8_t val = 0;
 				
-				switch(mode) {
+				switch(mode+16) {
 					case USR:
 					case SYS:
 						val = reg;
@@ -75,7 +75,7 @@ void init() {
 					}
 				}
 
-				arm_mode_register[(mode << 5)|reg] = val;
+				arm_mode_register[((mode) << 5)|reg] = val;//valeur max = 1111 10000 = 496
 			}
 		}
 	}
@@ -83,12 +83,13 @@ void init() {
 
 struct registers_data {
     uint32_t registers[NB_REGISTER];
-	uint8_t mode;
 };
 
 registers registers_create() {
 	registers r = malloc(sizeof(struct registers_data));
-	r->mode = USR;
+	int32_t cpsr = read_cpsr(r);
+	cpsr = set_bits(cpsr, 4, 0, USR);
+	write_cpsr(r, cpsr);
     return r;
 }
 
@@ -101,25 +102,26 @@ uint8_t is_valid(uint8_t reg) {
 }
 
 uint8_t has_spsr(registers r) {
-	return r->mode != USR && r->mode != SYS;
+	return get_mode(r) != USR && get_mode(r) != SYS;
 }
 
 uint8_t get_mode(registers r) {
-    return r->mode;
+    int32_t cpsr = read_cpsr(r);
+	return get_bits(cpsr, 4, 0);
 } 
 
 int current_mode_has_spsr(registers r) {
-    return r->mode == SVC || r->mode == ABT || r->mode == UND || r->mode == IRQ || r->mode == FIQ;
+    return get_mode(r) == SVC || get_mode(r) == ABT || get_mode(r) == UND || get_mode(r) == IRQ || get_mode(r) == FIQ;
 }
 
 int in_a_privileged_mode(registers r) {
-    return r->mode == SYS || r->mode == SVC || r->mode == ABT || r->mode == UND || r->mode == IRQ || r->mode == FIQ;
+    return get_mode(r) == SYS || get_mode(r) == SVC || get_mode(r) == ABT || get_mode(r) == UND || get_mode(r) == IRQ || get_mode(r) == FIQ;
 }
 
 uint32_t read_register(registers r, uint8_t reg) {
 	if(!is_valid(reg)) return 0;
 	init();
-	return r->registers[arm_mode_register[(r->mode << 5)|reg]];
+	return r->registers[arm_mode_register[((get_mode(r)-16) << 5)|reg]];
 }
 
 uint32_t read_usr_register(registers r, uint8_t reg) {
@@ -133,13 +135,13 @@ uint32_t read_cpsr(registers r) {
 uint32_t read_spsr(registers r) {
 	if(!has_spsr(r)) return 0;
 	init();
-	return r->registers[arm_mode_register[(r->mode << 5)|17]];
+	return r->registers[arm_mode_register[((get_mode(r)-16) << 5)|17]];
 }
 
 void write_register(registers r, uint8_t reg, uint32_t value) {
 	if(!is_valid(reg)) return;
 	init();
-	r->registers[arm_mode_register[(r->mode << 5)|reg]] = value;
+	r->registers[arm_mode_register[((get_mode(r)-16) << 5)|reg]] = value;
 }
 
 void write_usr_register(registers r, uint8_t reg, uint32_t value) {
@@ -153,5 +155,5 @@ void write_cpsr(registers r, uint32_t value) {
 void write_spsr(registers r, uint32_t value) {
 	if(!has_spsr(r)) return;
 	init();
-	r->registers[arm_mode_register[(r->mode << 5)|17]] = value;
+	r->registers[arm_mode_register[((get_mode(r)-16) << 5)|17]] = value;
 }
