@@ -122,7 +122,7 @@ static int arm_execute_instruction(arm_core p) {
 			}
 			else {
 				return arm_data_processing_shift(p, inst);
-			//}
+			}
 		case 1:
 			return arm_data_processing_immediate_msr(p, inst);
 		case 2:
