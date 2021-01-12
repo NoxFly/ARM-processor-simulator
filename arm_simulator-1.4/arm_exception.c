@@ -1,40 +1,110 @@
 /*
-Armator - simulateur de jeu d'instruction ARMv5T à but pédagogique
+Armator - simulateur de jeu d'instruction ARMv5T ï¿½ but pï¿½dagogique
 Copyright (C) 2011 Guillaume Huard
 Ce programme est libre, vous pouvez le redistribuer et/ou le modifier selon les
-termes de la Licence Publique Générale GNU publiée par la Free Software
-Foundation (version 2 ou bien toute autre version ultérieure choisie par vous).
+termes de la Licence Publique Gï¿½nï¿½rale GNU publiï¿½e par la Free Software
+Foundation (version 2 ou bien toute autre version ultï¿½rieure choisie par vous).
 
-Ce programme est distribué car potentiellement utile, mais SANS AUCUNE
+Ce programme est distribuï¿½ car potentiellement utile, mais SANS AUCUNE
 GARANTIE, ni explicite ni implicite, y compris les garanties de
-commercialisation ou d'adaptation dans un but spécifique. Reportez-vous à la
-Licence Publique Générale GNU pour plus de détails.
+commercialisation ou d'adaptation dans un but spï¿½cifique. Reportez-vous ï¿½ la
+Licence Publique Gï¿½nï¿½rale GNU pour plus de dï¿½tails.
 
-Vous devez avoir reçu une copie de la Licence Publique Générale GNU en même
-temps que ce programme ; si ce n'est pas le cas, écrivez à la Free Software
+Vous devez avoir reï¿½u une copie de la Licence Publique Gï¿½nï¿½rale GNU en mï¿½me
+temps que ce programme ; si ce n'est pas le cas, ï¿½crivez ï¿½ la Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
-États-Unis.
+ï¿½tats-Unis.
 
 Contact: Guillaume.Huard@imag.fr
-	 Bâtiment IMAG
+	 Bï¿½timent IMAG
 	 700 avenue centrale, domaine universitaire
-	 38401 Saint Martin d'Hères
+	 38401 Saint Martin d'Hï¿½res
 */
 #include "arm_exception.h"
 #include "arm_constants.h"
 #include "arm_core.h"
 #include "util.h"
 
-// Not supported below ARMv6, should read as 0
-#define CP15_reg1_EEbit 0
 
+#define CP15_reg1_EEbit 0
+#define HIGH_VECTOR_ADDRESS 0
 #define Exception_bit_9 (CP15_reg1_EEbit << 9)
 
+#define SP 13
+#define LR 14
+#define PC 15
+
+
+void branch_exception_vector(arm_core p, int32_t address) {
+    if (HIGH_VECTOR_ADDRESS) address |= 0xFFFF0000;
+	else address &= 0xFFFF;
+    arm_write_register(p, PC, address);
+}
+
+
+static void execute_(arm_core p, int needSpsr, int cpsr_bits_value, int cpsr_values_count, char* state, int16_t exception_vector) {
+    int32_t cpsr = arm_read_cpsr(p);
+    uint32_t sp = arm_read_register(p, SP);
+    
+    cpsr = set_bits(cpsr, 4, 0, cpsr_bits_value);
+    cpsr = clr_bit(cpsr, 5);
+    if(cpsr_values_count == 3) cpsr = set_bit(cpsr, 6);
+    cpsr = set_bit(cpsr, 7);
+    cpsr = chg_bit(cpsr, 9, CP15_reg1_EEbit);
+
+    arm_write_cpsr(p, cpsr);
+    arm_write_register(p, SP, sp);
+    
+    if(strcmp(state, "current") == 0) arm_write_register(p, LR, arm_address_current_instruction(p));
+    else if(strcmp(state, "next") == 0) arm_write_register(p, LR, arm_address_next_instruction(p));
+
+    if(needSpsr) {
+        int32_t spsr = cpsr;
+        arm_write_spsr(p, spsr);
+    }
+
+    branch_exception_vector(p, exception_vector);
+}
+
+
+static void execute_reset(arm_core p) {
+    execute_(p, 0, 0b10011, 3, "next", 0);
+}
+
+static void execute_undefined_instruction(arm_core p) {
+    execute_(p, 1, 0b11011, 2, "next", 0x4);
+}
+
+static void execute_software_interrupt(arm_core p) {
+    execute_(p, 1, 0b10011, 2, "next", 0x8);
+}
+
+static void execute_prefetch_abort(arm_core p) {
+    execute_(p, 1, 0b10111, 2, "current", 0xC);
+}
+
+static void execute_data_abort(arm_core p) {
+    execute_(p, 1, 0b10111, 2, "current", 0x10);
+}
+
+static void execute_irq(arm_core p) {
+    execute_(p, 1, 0b10010, 2, "next", 0x18);
+}
+
+static void execute_fast_irq(arm_core p) {
+    execute_(p, 1, 0b10001, 3, "next", 0x1C);
+}
+
+
 void arm_exception(arm_core p, unsigned char exception) {
-    /* We only support RESET initially */
-    /* Semantics of reset interrupt (ARM manual A2-18) */
-    if (exception == RESET) {
-        arm_write_cpsr(p, 0x1d3 | Exception_bit_9);
-	arm_write_usr_register(p, 15, 0);
+    switch (exception) {
+        case RESET:                 execute_reset(p); break;
+        case UNDEFINED_INSTRUCTION: execute_undefined_instruction(p); break;
+        case SOFTWARE_INTERRUPT:    execute_software_interrupt(p); break;
+        case PREFETCH_ABORT:        execute_prefetch_abort(p); break;
+        case DATA_ABORT:            execute_data_abort(p); break;
+        case INTERRUPT:             execute_irq(p); break;
+        case FAST_INTERRUPT:        execute_fast_irq(p); break;
+        default:
     }
 }
