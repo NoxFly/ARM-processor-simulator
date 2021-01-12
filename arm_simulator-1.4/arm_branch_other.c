@@ -52,15 +52,56 @@ int arm_coprocessor_others_swi(arm_core p, uint32_t ins) {
     return UNDEFINED_INSTRUCTION;
 }
 
-int arm_miscellaneous(arm_core p, uint32_t ins) { //Reference à A4.1.38 de la doc ARM
-	int rd = get_bits(ins, 15, 12);
+void write_psr(arm_core p, uint32_t ins, uint8_t value, int R) {
+	int psr = R ? arm_read_spsr(p) : arm_read_cpsr(p);
+				
+	if(get_bit(ins, 16))
+		psr = set_bits(psr, 7, 0, value);
+	
+	if(get_bit(ins, 17))
+		psr = set_bits(psr, 15, 8, value);
+	
+	if(get_bit(ins, 18))
+		psr = set_bits(psr, 23, 16, value);
+	
+	if(get_bit(ins, 19)) {
+		psr = set_bits(psr, 30, 24, value);// set_bits(psr, 31, 24, value) ne marche pas...
+		int bit31 = get_bit(value, 7);
+		psr = bit31 ? set_bit(psr, 31) : clr_bit(psr, 31);
+	}
+	
+	if(R) 
+		arm_write_spsr(p, psr);
+	else
+		arm_write_cpsr(p, psr);
+}
 
-	if(get_bit(ins, 22)) {
-		arm_write_register(p, rd, arm_read_spsr(p));
+int arm_miscellaneous(arm_core p, uint32_t ins) { //Reference à A4.1.38 et A4.1.39 de la doc ARM
+	if(get_bits(ins, 21, 20) == 0b10) {
+		if(get_bit(ins, 25)) {
+			int rotate_imm = get_bits(ins, 11, 8);
+			uint8_t immediate = get_bits(ins, 7, 0);
+			immediate = ror(immediate, 2*rotate_imm);
+			
+			write_psr(p, ins, immediate, get_bit(ins, 22));
+		}
+		else {
+			int rm = get_bits(ins, 3, 0);
+			uint8_t value = arm_read_register(p, rm);
+			
+			write_psr(p, ins, value, get_bit(ins, 22));
+		}
 	}
 	else {
-		arm_write_register(p, rd, arm_read_cpsr(p));
-	}
+		int rd = get_bits(ins, 15, 12);
 
+		if(get_bit(ins, 22)) {
+			arm_write_register(p, rd, arm_read_spsr(p));
+		}
+		else {
+			arm_write_register(p, rd, arm_read_cpsr(p));
+		}
+	}
+	
     return 0;
 }
