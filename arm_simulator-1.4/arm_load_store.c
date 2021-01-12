@@ -152,11 +152,11 @@ uint8_t executeInstr_miscellaneous(arm_core proc, uint32_t ins, uint32_t address
 	uint8_t l = get_bit(ins, 20);
 	uint8_t res = 0;
 	
-	switch (l<<2+s<<1+h) {
+	switch ((l<<2)+(s<<1)+h) {
         case 1 : // STRH
 			if(condition_passed(proc, ins)) {
-				half = (arm_read_register(p, rd) & 0xFFFF);
-    			return arm_write_half(p, address, half);
+				half = (arm_read_register(proc, rd) & 0xFFFF);
+    			return arm_write_half(proc, address, half);
 			}
 			return 0; 
 		break;
@@ -164,33 +164,33 @@ uint8_t executeInstr_miscellaneous(arm_core proc, uint32_t ins, uint32_t address
 			if (!(rd % 2) || (rd == LR) || !(get_bits(address,1,0) )) {
        			return 0; // Unpredictable
     		}
-   			res = arm_read_word(p, address, &word);
-   			if (!res) arm_write_register(p, rd, word);
-    		if (!res) res = arm_read_word(p, address+4, &word);
-   			if (!res) return arm_write_register(p, rd+1, word);
+   			res = arm_read_word(proc, address, &word);
+   			if (!res) arm_write_register(proc, rd, word);
+    		if (!res) res = arm_read_word(proc, address+4, &word);
+   			if (!res) return arm_write_register(proc, rd+1, word);
 		break;
         case 3 : // STRD
 		 	if (!(rd % 2) || (rd == LR) || !(get_bits(address,1,0)) || !(get_bit(address,2))) {
        			return 0; // Unpredictable
    			}
-			word = arm_read_register(p, rd);
-    		res = arm_write_word(p, address, word);
+			word = arm_read_register(proc, rd);
+    		res = arm_write_word(proc, address, word);
     		if (!res) {
-    			word = arm_read_register(p, rd+1);
-    			res = arm_write_word(p, address+4, word);
+    			word = arm_read_register(proc, rd+1);
+    			res = arm_write_word(proc, address+4, word);
     		}
     		return res;
 		break;
         case 5 : //LDRH
-			res = arm_read_half(p, address, &half);
+			res = arm_read_half(proc, address, &half);
     		if (!res)
-     		   arm_write_register(p, rd, (uint32_t)half);
+     		   arm_write_register(proc, rd, (uint32_t)half);
     		return res;
 		break;
         case 6 : // LDRSB
 			return UNDEFINED_INSTRUCTION;  
 		break;
-        case 7 :  // LDRSH
+        case 7 : // LDRSH
 			return UNDEFINED_INSTRUCTION; 
 		break;
         default: 
