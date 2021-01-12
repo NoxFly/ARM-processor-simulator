@@ -98,17 +98,17 @@ uint32_t set_index(arm_core proc, uint32_t ins, uint8_t rm) {
 	}
 }
 
-void load_store(arm_core proc, uint32_t ins, uint32_t *address, uint32_t *rn, uint32_t add_value) {
+void load_store(arm_core proc, uint32_t ins, uint32_t *address, uint32_t *rn, uint32_t add_word) {
 	uint32_t cond = get_bits(ins, 31, 28);
 
     if(p(ins)) {
-        *address = op(ins, *rn, add_value);
+        *address = op(ins, *rn, add_word);
     }
 
     if(p(ins) == w(ins)) {
-        *address = p(ins)? op(ins, *rn, add_value) : *rn;
+        *address = p(ins)? op(ins, *rn, add_word) : *rn;
         if(condition_passed(proc, cond)) {
-            *rn = p(ins)? *address : op(ins, *rn, add_value);
+            *rn = p(ins)? *address : op(ins, *rn, add_word);
         }
     }
 }
@@ -118,8 +118,8 @@ void load_store_multiple(arm_core proc, uint32_t ins, uint32_t *start_address,ui
     uint8_t nbSetBits = nb_set_bits(get_bits(ins, 15, 0)) * 4;
 
     // {LDM|STM} IB : {LDM|STM} DB : {LDM|STM} IA : {LDM|STM} DA
-    *start_address = *rn - p(ins)? (u? -4 : nbSetBits) : (u? 0: nbSetBits + 4);
-    *end_address   = *rn + p(ins)? (u? nbSetBits : -4) : (u? nbSetBits : 0);
+    *start_address = *rn - (p(ins) ? (u ? -4 : nbSetBits) : (u ? 0: nbSetBits - 4));
+    *end_address   = *rn + (p(ins) ? (u ? nbSetBits : -4) : (u ? nbSetBits - 4 : 0));
 
     if(condition_passed(proc, get_bits(ins, 31, 28)) && w(ins)) {
         *rn += nbSetBits * (u? 1 : -1);
@@ -143,38 +143,60 @@ void load_store_miscellaneous(arm_core proc, uint32_t ins, uint32_t *address, ui
    }
 }
 uint8_t executeInstr_miscellaneous(arm_core proc, uint32_t ins, uint32_t address) {
-	uint32_t halfword;
-	uint32_t simpleword;
-	uint8_t byte_s;
+	uint32_t word;
+	uint8_t byte;
+	uint16_t half;
 	uint8_t rd = get_bits(ins, 15, 12); // Numéro du registre qui sera chargé ou changé
-	uint8_t h = get_bit(ins, 22);
-    uint8_t s = get_bit(ins, 22);
+	uint8_t h = get_bit(ins, 5);
+    uint8_t s = get_bit(ins, 6);
 	uint8_t l = get_bit(ins, 20);
-
-	if(l) {
- 		if(h) { // LDRSH or LDRH
- 			arm_read_word(proc, address, &halfword);
- 			arm_write_register(proc, rd, halfword);
- 		}
- 		else if(s) { // LDRSB
- 			arm_read_byte(proc, address, &byte_s);
- 			arm_write_register(proc, rd, byte_s);
- 		}
- 	}
- 	else {
- 		if(h) { // STRD
- 			arm_read_register(proc, rd);
- 			//arm_write_word(proc, address, doubleword);
-			arm_write_word(proc, address, s? simpleword : halfword);
- 		}
-		else if(s) { // LDRD
-			//arm_read_word(proc, address, &doubleword);
- 			//arm_write_register(proc, rd, doubleword);
-			arm_read_word(proc, address, &simpleword);
-			arm_write_register(proc, rd, simpleword);
- 		}
- 	}
-	return 0;
+	uint8_t res = 0;
+	
+	switch ((l<<2)+(s<<1)+h) {
+        case 1 : // STRH
+			if(condition_passed(proc, ins)) {
+				half = (arm_read_register(proc, rd) & 0xFFFF);
+    			return arm_write_half(proc, address, half);
+			}
+			return 0; 
+		break;
+        case 2 : // LDRD
+			if (!(rd % 2) || (rd == LR) || !(get_bits(address,1,0) )) {
+       			return 0; // Unpredictable
+    		}
+   			res = arm_read_word(proc, address, &word);
+   			if (!res) arm_write_register(proc, rd, word);
+    		if (!res) res = arm_read_word(proc, address+4, &word);
+   			if (!res) return arm_write_register(proc, rd+1, word);
+		break;
+        case 3 : // STRD
+		 	if (!(rd % 2) || (rd == LR) || !(get_bits(address,1,0)) || !(get_bit(address,2))) {
+       			return 0; // Unpredictable
+   			}
+			word = arm_read_register(proc, rd);
+    		res = arm_write_word(proc, address, word);
+    		if (!res) {
+    			word = arm_read_register(proc, rd+1);
+    			res = arm_write_word(proc, address+4, word);
+    		}
+    		return res;
+		break;
+        case 5 : //LDRH
+			res = arm_read_half(proc, address, &half);
+    		if (!res)
+     		   arm_write_register(proc, rd, (uint32_t)half);
+    		return res;
+		break;
+        case 6 : // LDRSB
+			return UNDEFINED_INSTRUCTION;  
+		break;
+        case 7 : // LDRSH
+			return UNDEFINED_INSTRUCTION; 
+		break;
+        default: 
+			return UNDEFINED_INSTRUCTION; 
+		break; 
+    }
 }
 
 uint8_t executeInstr_word_byte(arm_core proc, uint32_t ins, uint32_t address) {
@@ -230,19 +252,27 @@ uint8_t executeInstr_multiple(arm_core proc, uint32_t ins, uint32_t start_addres
 	uint8_t res = 0;
 
 	if(l) { // LDM
-		uint32_t value;
+		uint32_t word;
 		uint8_t pc = get_bit(registers, pc_nb);
 		address = start_address;
 		for(i = 0; i <= 14; i++) {
-			if(get_bit(registers, i)) {
-				res = arm_read_word(proc, address, &value);
-				arm_write_register(proc, i, value);
-			    address += 4;
-			}
+			if(!res){
+				if(get_bit(registers, i)) {
+					res = arm_read_word(proc, address, &word);
+					if(!res) arm_write_register(proc, i, word);
+			    	address += 4;
+				}
+			}		
 		}
-		if(pc) {
-			res = arm_read_word(proc, address, &value);
-			arm_write_register(proc, pc_nb, value & 0xFFFFFFFE);
+		if(pc && !res) {
+			res = arm_read_word(proc, address, &word);
+			uint8_t temp = get_bit(word, 0);
+			uint32_t cpsr = arm_read_cpsr(proc);
+			if (temp != -1) {
+        		cpsr = (temp == 1) ? set_bit(cpsr, 5) : clr_bit(cpsr, 5);
+    			arm_write_cpsr(proc, cpsr);
+			}
+			arm_write_register(proc, pc_nb, word & 0xFFFFFFFE);
 			address += 4;
 		}
 		assert(end_address == (address - 4));
@@ -250,10 +280,12 @@ uint8_t executeInstr_multiple(arm_core proc, uint32_t ins, uint32_t start_addres
 	}
 	else { // STM
 		address = start_address;
-		for(i = 0; i <= 15 ; i++) {
-			if(get_bit(registers, i)) {
-				res = arm_write_word(proc, address, arm_read_register(proc, i));
-				address += 4;
+		for(i = 0; i <= 15; i++) {
+			if(!res){
+				if(get_bit(registers, i)) {
+					res = arm_write_word(proc, address, arm_read_register(proc, i));
+					address += 4;
+				}
 			}
 		}
 		assert(end_address == (address - 4));
@@ -282,11 +314,11 @@ int arm_load_store(arm_core proc, uint32_t ins) {
 			offset = set_offset(ins);
 			load_store_miscellaneous(proc, ins, &address, &rn, rm);
 			return executeInstr_miscellaneous(proc, ins, address);
-		    break;
+		break;
 		case 2:   // Part 1 : Immidiate
 			load_store(proc, ins, &address, &rn, offset);
 			return executeInstr_word_byte(proc, ins, address);
-		    break;
+		break;
 		case 3:
             a = !get_bits(ins, 11, 4);
             if(a || (!get_bit(ins, 4) && (p(ins) || !w(ins)))) {
@@ -296,7 +328,7 @@ int arm_load_store(arm_core proc, uint32_t ins) {
 		break;
 
 		default:
-			return -1;
+			return UNDEFINED_INSTRUCTION;
 	}
 }
 
