@@ -45,6 +45,11 @@ void branch_exception_vector(arm_core p, int32_t address) {
 static void execute_(arm_core p, int needSpsr, int cpsr_bits_value, int cpsr_values_count, char* state, int16_t exception_vector) {
     int32_t cpsr = arm_read_cpsr(p);
     uint32_t sp = arm_read_register(p, SP);
+
+    int addr =
+          (strcmp(state, "current") == 0)? arm_address_current_instruction(p)
+        : (strcmp(state, "next") == 0)? arm_address_next_instruction(p)
+        : 0;
     
     cpsr = set_bits(cpsr, 4, 0, cpsr_bits_value);
     cpsr = clr_bit(cpsr, 5);
@@ -54,9 +59,7 @@ static void execute_(arm_core p, int needSpsr, int cpsr_bits_value, int cpsr_val
 
     arm_write_cpsr(p, cpsr);
     arm_write_register(p, SP, sp);
-    
-    if(strcmp(state, "current") == 0) arm_write_register(p, LR, arm_address_current_instruction(p));
-    else if(strcmp(state, "next") == 0) arm_write_register(p, LR, arm_address_next_instruction(p));
+    arm_write_register(p, LR, addr);
 
     if(needSpsr) {
         int32_t spsr = cpsr;
