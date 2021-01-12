@@ -27,13 +27,6 @@ Contact: Guillaume.Huard@imag.fr
 
 
 void branch_exception_vector(arm_core p, int32_t address);
-static void execute_irq(arm_core p);
-static void execute_reset(arm_core p);
-static void execute_fast_irq(arm_core p);
-static void execute_data_abort(arm_core p);
-static void execute_prefetch_abort(arm_core p);
-static void execute_software_interrupt(arm_core p);
-static void execute_undefined_instruction(arm_core p);
 void arm_exception(arm_core p, unsigned char exception);
 
 #endif
