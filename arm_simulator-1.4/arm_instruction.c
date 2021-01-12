@@ -114,7 +114,7 @@ static int arm_execute_instruction(arm_core p) {
 	instType = get_bits(inst, 27, 25);
 	switch(instType) {
 		case 0:
-			if(get_bits(inst, 24, 23) == 0b10 && get_bits(inst, 21, 20) == 0b00) {
+			if(get_bits(inst, 24, 23) == 0b10 && (get_bits(inst, 21, 20) == 0b00 || get_bits(inst, 21, 20) == 0b10)) {
 				return arm_miscellaneous(p, inst);
 			}
 			else if(get_bit(inst, 4) == 1 && get_bit(inst, 7) == 1) {
@@ -124,7 +124,12 @@ static int arm_execute_instruction(arm_core p) {
 				return arm_data_processing_shift(p, inst);
 			}
 		case 1:
-			return arm_data_processing_immediate_msr(p, inst);
+			if(get_bits(inst, 24, 23) == 0b10 && get_bits(inst, 21, 20) == 0b10) {
+				return arm_miscellaneous(p, inst);
+			}
+			else {
+				return arm_data_processing_immediate_msr(p, inst);
+			}
 		case 2:
 			return arm_load_store(p, inst);
 		case 3:
