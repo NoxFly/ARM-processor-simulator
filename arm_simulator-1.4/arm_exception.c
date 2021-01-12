@@ -24,7 +24,7 @@ Contact: Guillaume.Huard@imag.fr
 #include "arm_constants.h"
 #include "arm_core.h"
 #include "util.h"
-
+#include <string.h>
 
 #define CP15_reg1_EEbit 0
 #define HIGH_VECTOR_ADDRESS 0
@@ -47,15 +47,15 @@ static void execute_(arm_core p, int needSpsr, int cpsr_bits_value, int cpsr_val
     uint32_t sp = arm_read_register(p, SP);
 
     int addr =
-          (strcmp(state, "current") == 0)? arm_address_current_instruction(p)
-        : (strcmp(state, "next") == 0)? arm_address_next_instruction(p)
+          (strcmp(state, "current") == 0)? arm_read_register(p, 15)-4
+        : (strcmp(state, "next") == 0)? arm_read_register(p, 15)
         : 0;
     
     cpsr = set_bits(cpsr, 4, 0, cpsr_bits_value);
     cpsr = clr_bit(cpsr, 5);
     if(cpsr_values_count == 3) cpsr = set_bit(cpsr, 6);
     cpsr = set_bit(cpsr, 7);
-    cpsr = chg_bit(cpsr, 9, CP15_reg1_EEbit);
+    cpsr = CP15_reg1_EEbit ? set_bit(cpsr, 9) : clr_bit(cpsr, 9);
 
     arm_write_cpsr(p, cpsr);
     arm_write_register(p, SP, sp);
@@ -108,6 +108,6 @@ void arm_exception(arm_core p, unsigned char exception) {
         case DATA_ABORT:            execute_data_abort(p); break;
         case INTERRUPT:             execute_irq(p); break;
         case FAST_INTERRUPT:        execute_fast_irq(p); break;
-        default:
+        default: break;
     }
 }
