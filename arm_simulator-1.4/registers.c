@@ -27,18 +27,19 @@ Contact: Guillaume.Huard@imag.fr
 
 #define NB_REGISTER 37
 
-uint8_t arm_mode_register[512];
-uint8_t arm_mode_register_init = 0;
+uint8_t arm_mode_register[497]; // 497 éléments car l'indice max est 496 (voir ligne 79)
+uint8_t arm_mode_register_init = 0; // Permet de savoir si le tableau est initialisé
 
+// construction du tableau permettant d'accéder au bon registre en fonction du numéro du registre et du mode
 void init() {
     if(!arm_mode_register_init) {
 		arm_mode_register_init = 1;
 		
-		for(int mode = 0 ; mode < 16 ; mode++) {
+		for(int mode = 0 ; mode < 16 ; mode++) { 
 			for(int reg = 0 ; reg < 17 ; reg++) { // register = 16 -> CPSR ; register = 17 -> SPSR
 				uint8_t val = 0;
 				
-				switch(mode+16) {
+				switch(mode+16) { // +16 car les constantes correspondant aux modes vont de 16 à 31
 					case USR:
 					case SYS:
 						val = reg;
@@ -51,7 +52,7 @@ void init() {
 							val = reg;
 						}
 						else { 
-							int i = reg <= 14 ? reg - 13 : 2;
+							int i = reg <= 14 ? reg - 13 : 2;// Voir fichier arm_constants.h : la façon dont sont définies les constantes pour les modes permet ici d'obtenir un calcul simplifié
 							val =   mode == SVC ? 
 										R13_SVC : 
 									mode == ABT ? 
@@ -68,14 +69,14 @@ void init() {
 							val = reg;
 						}
 						else { 
-							int i = reg <= 14 ? reg - 8 : 7; 
+							int i = reg <= 14 ? reg - 8 : 7; // Calcul simplifié, voir fichier arm_constants.h
 							val = R8_FIQ + i;
 						}
 						break;
 					}
 				}
 
-				arm_mode_register[((mode) << 5)|reg] = val;//valeur max = 1111 10000 = 496
+				arm_mode_register[((mode) << 5)|reg] = val;//Valeur max = 1111 10000 = 496
 			}
 		}
 	}
@@ -88,7 +89,7 @@ struct registers_data {
 registers registers_create() {
 	registers r = malloc(sizeof(struct registers_data));
 	int32_t cpsr = read_cpsr(r);
-	cpsr = set_bits(cpsr, 4, 0, USR);
+	cpsr = set_bits(cpsr, 4, 0, USR); // Activation du mode User
 	write_cpsr(r, cpsr);
     return r;
 }
@@ -121,7 +122,7 @@ int in_a_privileged_mode(registers r) {
 uint32_t read_register(registers r, uint8_t reg) {
 	if(!is_valid(reg)) return 0;
 	init();
-	return r->registers[arm_mode_register[((get_mode(r)-16) << 5)|reg]];
+	return r->registers[arm_mode_register[((get_mode(r)-16) << 5)|reg]];// l'accès avec "get_mode(r)-16" permet de réduire la taille du tableau et donc d'économiser de la mémoire
 }
 
 uint32_t read_usr_register(registers r, uint8_t reg) {
@@ -135,13 +136,13 @@ uint32_t read_cpsr(registers r) {
 uint32_t read_spsr(registers r) {
 	if(!has_spsr(r)) return 0;
 	init();
-	return r->registers[arm_mode_register[((get_mode(r)-16) << 5)|17]];
+	return r->registers[arm_mode_register[((get_mode(r)-16) << 5)|17]]; // accès avec "get_mode(r)-16" : voir ligne 125
 }
 
 void write_register(registers r, uint8_t reg, uint32_t value) {
 	if(!is_valid(reg)) return;
 	init();
-	r->registers[arm_mode_register[((get_mode(r)-16) << 5)|reg]] = value;
+	r->registers[arm_mode_register[((get_mode(r)-16) << 5)|reg]] = value; // accès avec "get_mode(r)-16" : voir ligne 125
 }
 
 void write_usr_register(registers r, uint8_t reg, uint32_t value) {
@@ -155,5 +156,5 @@ void write_cpsr(registers r, uint32_t value) {
 void write_spsr(registers r, uint32_t value) {
 	if(!has_spsr(r)) return;
 	init();
-	r->registers[arm_mode_register[((get_mode(r)-16) << 5)|17]] = value;
+	r->registers[arm_mode_register[((get_mode(r)-16) << 5)|17]] = value; // accès avec "get_mode(r)-16" : voir ligne 125
 }

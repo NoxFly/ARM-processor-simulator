@@ -1,24 +1,24 @@
 /*
-Armator - simulateur de jeu d'instruction ARMv5T � but p�dagogique
+Armator - simulateur de jeu d'instruction ARMv5T à but pédagogique
 Copyright (C) 2011 Guillaume Huard
 Ce programme est libre, vous pouvez le redistribuer et/ou le modifier selon les
-termes de la Licence Publique G�n�rale GNU publi�e par la Free Software
-Foundation (version 2 ou bien toute autre version ult�rieure choisie par vous).
+termes de la Licence Publique Générale GNU publiée par la Free Software
+Foundation (version 2 ou bien toute autre version ultérieure choisie par vous).
 
-Ce programme est distribu� car potentiellement utile, mais SANS AUCUNE
+Ce programme est distribué car potentiellement utile, mais SANS AUCUNE
 GARANTIE, ni explicite ni implicite, y compris les garanties de
-commercialisation ou d'adaptation dans un but sp�cifique. Reportez-vous � la
-Licence Publique G�n�rale GNU pour plus de d�tails.
+commercialisation ou d'adaptation dans un but spécifique. Reportez-vous à la
+Licence Publique Générale GNU pour plus de détails.
 
-Vous devez avoir re�u une copie de la Licence Publique G�n�rale GNU en m�me
-temps que ce programme ; si ce n'est pas le cas, �crivez � la Free Software
+Vous devez avoir reçu une copie de la Licence Publique Générale GNU en même
+temps que ce programme ; si ce n'est pas le cas, écrivez à la Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
-�tats-Unis.
+États-Unis.
 
 Contact: Guillaume.Huard@imag.fr
-	 B�timent IMAG
+	 Bâtiment IMAG
 	 700 avenue centrale, domaine universitaire
-	 38401 Saint Martin d'H�res
+	 38401 Saint Martin d'Hères
 */
 #include "arm_exception.h"
 #include "arm_constants.h"
@@ -33,43 +33,44 @@ Contact: Guillaume.Huard@imag.fr
 #define SP 13
 #define LR 14
 #define PC 15
+/* Fichier permetttant la gestion et le traitement des exceptions*/
 
-
+// Effectue le branchement à l'adresse de l'exception
 void branch_exception_vector(arm_core p, int32_t address) {
     if (HIGH_VECTOR_ADDRESS) address |= 0xFFFF0000;
 	else address &= 0xFFFF;
     arm_write_register(p, PC, address);
 }
 
-
+// Corps de l'execution des exceptions
 static void execute_(arm_core p, int needSpsr, int cpsr_bits_value, int cpsr_values_count, char* state, int16_t exception_vector) {
-    int32_t cpsr = arm_read_cpsr(p);
-    uint32_t sp = arm_read_register(p, SP);
+    int32_t cpsr = arm_read_cpsr(p); // Registre d'état courant
+    uint32_t sp = arm_read_register(p, SP); // Registre du pointeur de pile
+    int32_t spsr = cpsr;
 
     int addr =
-          (strcmp(state, "current") == 0)? arm_read_register(p, 15)-4
-        : (strcmp(state, "next") == 0)? arm_read_register(p, 15)
+          (strcmp(state, "current") == 0)? arm_read_register(p, PC)-4 // Program Counter, indique l'instruction courante
+        : (strcmp(state, "next") == 0)? arm_read_register(p, PC) // ou suivante
         : 0;
     
-    cpsr = set_bits(cpsr, 4, 0, cpsr_bits_value);
-    cpsr = clr_bit(cpsr, 5);
-    if(cpsr_values_count == 3) cpsr = set_bit(cpsr, 6);
-    cpsr = set_bit(cpsr, 7);
-    cpsr = CP15_reg1_EEbit ? set_bit(cpsr, 9) : clr_bit(cpsr, 9);
+    cpsr = set_bits(cpsr, 4, 0, cpsr_bits_value); // Mise à jour des bits du CPSR avec ceux de l'exception 
+    cpsr = clr_bit(cpsr, 5);  /* Execute in ARM state */
+    if(cpsr_values_count == 3) cpsr = set_bit(cpsr, 6); /* Empêche les interruptions "rapides" */
+    cpsr = set_bit(cpsr, 7); // Empêche les interruptions
+    cpsr = CP15_reg1_EEbit ? set_bit(cpsr, 9) : clr_bit(cpsr, 9); // Met à jour le boutisme de l'exception
 
-    arm_write_cpsr(p, cpsr);
-    arm_write_register(p, SP, sp);
-    arm_write_register(p, LR, addr);
+    arm_write_cpsr(p, cpsr); // Sauvegarde du nouveau CPSR
+    arm_write_register(p, SP, sp); //  Stack pointeur R13
+    arm_write_register(p, LR, addr); // Link Register : Ce registre contient l’adresse de l’instruction suivante après un BRANCH et un LIEN
 
-    if(needSpsr) {
-        int32_t spsr = cpsr;
-        arm_write_spsr(p, spsr);
+    if(needSpsr) { // Si l'exeption nécéssite de sauvegarder l'état précédent 
+        arm_write_spsr(p, spsr); 
     }
 
     branch_exception_vector(p, exception_vector);
 }
 
-
+/* fonctions ayant les valeurs propres à chacune des exeptions */ 
 static void execute_reset(arm_core p) {
     execute_(p, 0, 0b10011, 3, "next", 0);
 }
@@ -98,7 +99,7 @@ static void execute_fast_irq(arm_core p) {
     execute_(p, 1, 0b10001, 3, "next", 0x1C);
 }
 
-
+// Fonction main
 void arm_exception(arm_core p, unsigned char exception) {
     switch (exception) {
         case RESET:                 execute_reset(p); break;

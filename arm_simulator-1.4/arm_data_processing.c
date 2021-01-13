@@ -1,24 +1,24 @@
 /*
-Armator - simulateur de jeu d'instruction ARMv5T � but p�dagogique
+Armator - simulateur de jeu d'instruction ARMv5T à but pédagogique
 Copyright (C) 2011 Guillaume Huard
 Ce programme est libre, vous pouvez le redistribuer et/ou le modifier selon les
-termes de la Licence Publique G�n�rale GNU publi�e par la Free Software
-Foundation (version 2 ou bien toute autre version ult�rieure choisie par vous).
+termes de la Licence Publique Générale GNU publiée par la Free Software
+Foundation (version 2 ou bien toute autre version ultérieure choisie par vous).
 
-Ce programme est distribu� car potentiellement utile, mais SANS AUCUNE
+Ce programme est distribué car potentiellement utile, mais SANS AUCUNE
 GARANTIE, ni explicite ni implicite, y compris les garanties de
-commercialisation ou d'adaptation dans un but sp�cifique. Reportez-vous � la
-Licence Publique G�n�rale GNU pour plus de d�tails.
+commercialisation ou d'adaptation dans un but spécifique. Reportez-vous à la
+Licence Publique Générale GNU pour plus de détails.
 
-Vous devez avoir re�u une copie de la Licence Publique G�n�rale GNU en m�me
-temps que ce programme ; si ce n'est pas le cas, �crivez � la Free Software
+Vous devez avoir reçu une copie de la Licence Publique Générale GNU en même
+temps que ce programme ; si ce n'est pas le cas, écrivez à la Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
-�tats-Unis.
+États-Unis.
 
 Contact: Guillaume.Huard@imag.fr
-	 B�timent IMAG
+	 Bâtiment IMAG
 	 700 avenue centrale, domaine universitaire
-	 38401 Saint Martin d'H�res
+	 38401 Saint Martin d'Hères
 */
 #include "arm_data_processing.h"
 #include "arm_exception.h"
@@ -29,7 +29,8 @@ Contact: Guillaume.Huard@imag.fr
 
 #include <string.h>
 
-int getCarryFlag(uint32_t left, uint32_t right, char operand) {
+// Calcul de la dernière retenue ou du dernier emprunt si soustraction (flag C)
+int getCarryFlag(uint32_t left, uint32_t right, char operand) { 
 	int cFlag = 0;
 
 	for(int i = 0 ; i < 31 ; i++) {
@@ -60,7 +61,7 @@ int getCarryFlagSub(uint32_t left, uint32_t right) {
 	return getCarryFlag(left, right, '-');
 }
 
-
+//Calcul du flag V
 int getOverflowFlag(int res, int a, int b, char operand) {
 	int leftBit = get_bit(a, 31);
 	int rightBit = get_bit(b, 31);
@@ -81,11 +82,13 @@ int getOverflowFlagSub(int res, int a, int b) {
 	return getOverflowFlag(res, a, b, '-');
 }
 
+// Mise à jour des variables pour les instructions qui modifient uniquement les flags ZNCV
 void updateForTest(int* updateCPSR, int* write_register) {
 	*updateCPSR = 1;
 	*write_register = 0;
 }
 
+// Exécution de l'instruction
 int executeInst(int opcode, arm_core p, int rd, uint32_t valueRn, uint32_t shifter_operand, int updateCPSR) {
 	int valueCpsr = arm_read_cpsr(p);
 	int zFlag = get_bit(valueCpsr, Z);
@@ -156,7 +159,7 @@ int executeInst(int opcode, arm_core p, int rd, uint32_t valueRn, uint32_t shift
 			break;
 		case 0b1000: // TST
 			res = valueRn && shifter_operand;
-			updateForTest(&updateCPSR, &write_register);
+			updateForTest(&updateCPSR, &write_register); // On modifie seulement les flags ZNCV
 			break;
 		case 0b1001: // TEQ
 			res = (valueRn || shifter_operand) && !(valueRn && shifter_operand);
@@ -199,16 +202,23 @@ int executeInst(int opcode, arm_core p, int rd, uint32_t valueRn, uint32_t shift
 	int t[4][2] = { { zFlag, Z }, { nFlag, N }, { cFlag, C }, { vFlag, V } };
 
 	if(updateCPSR) {
-		for(int i=0; i < 4; i++) {
-			valueCpsr = t[i][0]? set_bit(valueCpsr, t[i][1]) : clr_bit(valueCpsr, t[i][1]);
+		if(write_register && rd == 15) { // voir doc ARM A4-5 | write_register permet de vérifier qu'on est bien dans une instruction qui ne modifie pas seulement les flags ZNCV
+			if(arm_current_mode_has_spsr(p))
+				arm_write_cpsr(p, arm_read_spsr(p));
 		}
+		else {
+			for(int i=0; i < 4; i++) {
+				valueCpsr = t[i][0]? set_bit(valueCpsr, t[i][1]) : clr_bit(valueCpsr, t[i][1]);
+			}
 
-		arm_write_cpsr(p, valueCpsr);
+			arm_write_cpsr(p, valueCpsr);
+		}
 	}
 	
 	return 0;
 }
 
+// On effectue l'opération lsl, lsr, asr ou ror
 int getShifterOperand(int so, int si, char* operand) {
 	char* operands[4] = { "lsl", "lsr", "asr", "ror" };
 	
@@ -242,20 +252,23 @@ int getShifterOperandRegister(arm_core p, uint32_t ins, int so, char* operand) {
 
 /* Decoding functions for different classes of instructions */
 int arm_data_processing_shift(arm_core p, uint32_t ins) {
-	int opcode = get_bits(ins, 24, 21);
+	int opcode = get_bits(ins, 24, 21); // Opération à effectuer
 	int rn = get_bits(ins, 19, 16);
 	int rd = get_bits(ins, 15, 12);
-	int updateCPSR = get_bit(ins, 20) && rd != 15;
+	int updateCPSR = get_bit(ins, 20); // Doit-on mettre à jour les flags ZNCV ?
 	
 	int rm = get_bits(ins, 3, 0);
 	uint32_t shifter_operand = arm_read_register(p, rm);
 	uint32_t valueRn = arm_read_register(p, rn);
 	
-	if(rm == 15) {
+	if(rm == 15) { // voir doc ARM A5-8
 		shifter_operand += 8;
 	}
+	else if(rn == 15) {
+		shifter_operand = valueRn + 8;
+	}
 
-	for(int i=0; i < 7; i++) {
+	for(int i=0; i < 7; i++) { // On effectue l'opération lsl, lsr, asr ou ror sur shifter_operand
 		if(get_bits(ins, 6, 4) == i) {
 			char* op = (i < 2)? "lsl" : (i < 4)? "lsr" : (i < 6)? "asr" : "ror";
 			shifter_operand = (i%2 == 0)?
@@ -269,14 +282,14 @@ int arm_data_processing_shift(arm_core p, uint32_t ins) {
 }
 
 int arm_data_processing_immediate_msr(arm_core p, uint32_t ins) {
-    int opcode = get_bits(ins, 24, 21);
+    int opcode = get_bits(ins, 24, 21); // Opération à effectuer
 	int rn = get_bits(ins, 19, 16);
 	int rd = get_bits(ins, 15, 12);
-	int updateCPSR = get_bit(ins, 20) && rd != 15;
+	int updateCPSR = get_bit(ins, 20); // Doit-on mettre à jour les flags ZNCV ?
 	int rotate_imm = get_bits(ins, 11, 8);
 	uint32_t shifter_operand = get_bits(ins, 7, 0);
 	
-	shifter_operand = ror(shifter_operand, 2*rotate_imm);
+	shifter_operand = ror(shifter_operand, 2*rotate_imm); // voir doc ARM A5-6
 	uint32_t valueRn = arm_read_register(p, rn);
 	
     return executeInst(opcode, p, rd, valueRn, shifter_operand, updateCPSR);

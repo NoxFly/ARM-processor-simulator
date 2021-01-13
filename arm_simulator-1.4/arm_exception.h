@@ -1,24 +1,24 @@
 /*
-Armator - simulateur de jeu d'instruction ARMv5T � but p�dagogique
+Armator - simulateur de jeu d'instruction ARMv5T à but pédagogique
 Copyright (C) 2011 Guillaume Huard
 Ce programme est libre, vous pouvez le redistribuer et/ou le modifier selon les
-termes de la Licence Publique G�n�rale GNU publi�e par la Free Software
-Foundation (version 2 ou bien toute autre version ult�rieure choisie par vous).
+termes de la Licence Publique Générale GNU publiée par la Free Software
+Foundation (version 2 ou bien toute autre version ultérieure choisie par vous).
 
-Ce programme est distribu� car potentiellement utile, mais SANS AUCUNE
+Ce programme est distribué car potentiellement utile, mais SANS AUCUNE
 GARANTIE, ni explicite ni implicite, y compris les garanties de
-commercialisation ou d'adaptation dans un but sp�cifique. Reportez-vous � la
-Licence Publique G�n�rale GNU pour plus de d�tails.
+commercialisation ou d'adaptation dans un but spécifique. Reportez-vous à la
+Licence Publique Générale GNU pour plus de détails.
 
-Vous devez avoir re�u une copie de la Licence Publique G�n�rale GNU en m�me
-temps que ce programme ; si ce n'est pas le cas, �crivez � la Free Software
+Vous devez avoir reçu une copie de la Licence Publique Générale GNU en même
+temps que ce programme ; si ce n'est pas le cas, écrivez à la Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
-�tats-Unis.
+États-Unis.
 
 Contact: Guillaume.Huard@imag.fr
-	 B�timent IMAG
+	 Bâtiment IMAG
 	 700 avenue centrale, domaine universitaire
-	 38401 Saint Martin d'H�res
+	 38401 Saint Martin d'Hères
 */
 #ifndef __ARM_EXCEPTION_H__
 #define __ARM_EXCEPTION_H__

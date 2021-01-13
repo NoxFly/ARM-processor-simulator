@@ -1,24 +1,24 @@
 /*
-Armator - simulateur de jeu d'instruction ARMv5T � but p�dagogique
+Armator - simulateur de jeu d'instruction ARMv5T à but pédagogique
 Copyright (C) 2011 Guillaume Huard
 Ce programme est libre, vous pouvez le redistribuer et/ou le modifier selon les
-termes de la Licence Publique G�n�rale GNU publi�e par la Free Software
-Foundation (version 2 ou bien toute autre version ult�rieure choisie par vous).
+termes de la Licence Publique Générale GNU publiée par la Free Software
+Foundation (version 2 ou bien toute autre version ultérieure choisie par vous).
 
-Ce programme est distribu� car potentiellement utile, mais SANS AUCUNE
+Ce programme est distribué car potentiellement utile, mais SANS AUCUNE
 GARANTIE, ni explicite ni implicite, y compris les garanties de
-commercialisation ou d'adaptation dans un but sp�cifique. Reportez-vous � la
-Licence Publique G�n�rale GNU pour plus de d�tails.
+commercialisation ou d'adaptation dans un but spécifique. Reportez-vous à la
+Licence Publique Générale GNU pour plus de détails.
 
-Vous devez avoir re�u une copie de la Licence Publique G�n�rale GNU en m�me
-temps que ce programme ; si ce n'est pas le cas, �crivez � la Free Software
+Vous devez avoir reçu une copie de la Licence Publique Générale GNU en même
+temps que ce programme ; si ce n'est pas le cas, écrivez à la Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
-�tats-Unis.
+États-Unis.
 
 Contact: Guillaume.Huard@imag.fr
-	 B�timent IMAG
+	 Bâtiment IMAG
 	 700 avenue centrale, domaine universitaire
-	 38401 Saint Martin d'H�res
+	 38401 Saint Martin d'Hères
 */
 #include <assert.h>
 #include "arm_load_store.h"
@@ -28,13 +28,22 @@ Contact: Guillaume.Huard@imag.fr
 #include "debug.h"
 
 
+/* Instructions implémentées :
+avec arm_load_store :
+	 word/byte : LDR, STR, LDRB, STRB
+	miscellaneous : LDRH, STRH, LDRD, STRD
+avec arm_load_store_multiple :
+	LDM(1), STM(1)
+*/
 
-
+/* Retourne TRUE si l’état des flags N, Z, C et V 
+remplit la condition encodée dans l’argument cond,
+et retourne FALSE dans tous les autres cas */
 uint8_t condition_passed(arm_core proc, uint32_t ins) {
 	uint8_t cond,cpsr,z,n,c,v;
     
-	cpsr = arm_read_cpsr(proc);
-	cond = get_bits(ins,31,28);
+	cpsr = arm_read_cpsr(proc); 
+	cond = get_bits(ins,31,28); // Les bits des FLAGS ZNCV
 
 	z = get_bit(cpsr,30);
 	n = get_bit(cpsr,31);
@@ -62,10 +71,12 @@ uint8_t condition_passed(arm_core proc, uint32_t ins) {
 	}
 }
 
+/*Effectue une opération en fonction du flag u */
 uint32_t op(uint32_t ins, uint32_t left_op, uint32_t right_op) {
     return left_op + right_op * (get_bit(ins,23)? 1 : -1);
 }
 
+/* Permet de connaître le nombre de bits a 1 sur un nombre passé en argument*/
 uint8_t nb_set_bits(uint16_t nb) {
 	uint8_t count = 0;
 	while(nb) {
@@ -74,11 +85,12 @@ uint8_t nb_set_bits(uint16_t nb) {
 	}
 	return count;
 }
-
+/*Sert a trouver l'offset pour les instructions miscellaneous de addrmode_load_store - */
 uint32_t set_offset(uint32_t ins) {
 	return (get_bits(ins, 11, 8) << 4) | get_bits(ins, 3, 0);
 }
 
+/*Sert a trouver l'index pour les instructions scaled de addrmode_load_store - Voir doc A5.2.4 */
 uint32_t set_index(arm_core proc, uint32_t ins, uint8_t rm) {
 	uint8_t shift = get_bits(ins, 6, 5);
 	uint8_t shift_imm = get_bits(ins, 11, 7);
@@ -97,8 +109,8 @@ uint32_t set_index(arm_core proc, uint32_t ins, uint8_t rm) {
 			return 0;
 	}
 }
-
-void load_store(arm_core proc, uint32_t ins, uint32_t *address, uint32_t *rn, uint32_t add_word) {
+/* Addressing mode multiple - Voir Documentation A5.2 */
+void addrmode_load_store(arm_core proc, uint32_t ins, uint32_t *address, uint32_t *rn, uint32_t add_word) {
 	uint32_t cond = get_bits(ins, 31, 28);
 
     if(p(ins)) {
@@ -112,8 +124,8 @@ void load_store(arm_core proc, uint32_t ins, uint32_t *address, uint32_t *rn, ui
         }
     }
 }
-
-void load_store_multiple(arm_core proc, uint32_t ins, uint32_t *start_address,uint32_t *end_address, uint32_t *rn) {
+/* Addressing mode multiple - Voir Documentation A5.4 */
+void addrmode_load_store_multiple(arm_core proc, uint32_t ins, uint32_t *start_address,uint32_t *end_address, uint32_t *rn) {
    	uint8_t u = get_bit(ins, 23);
     uint8_t nbSetBits = nb_set_bits(get_bits(ins, 15, 0)) * 4;
 
@@ -125,8 +137,8 @@ void load_store_multiple(arm_core proc, uint32_t ins, uint32_t *start_address,ui
         *rn += nbSetBits * (u? 1 : -1);
     }
 }
-
-void load_store_miscellaneous(arm_core proc, uint32_t ins, uint32_t *address, uint32_t *rn, uint32_t offset) {
+/* Addressing mode miscellaneous - Voir Documentation A5.3 */
+void addrmode_load_store_miscellaneous(arm_core proc, uint32_t ins, uint32_t *address, uint32_t *rn, uint32_t offset) {
     uint8_t b = get_bit(ins, 22);
     uint32_t rm = arm_read_register(proc, get_bits(ins, 3, 0));
 
@@ -142,6 +154,8 @@ void load_store_miscellaneous(arm_core proc, uint32_t ins, uint32_t *address, ui
        }
    }
 }
+
+/* Voir doc A3.11.5 */
 uint8_t executeInstr_miscellaneous(arm_core proc, uint32_t ins, uint32_t address) {
 	uint32_t word;
 	uint8_t byte;
@@ -153,23 +167,23 @@ uint8_t executeInstr_miscellaneous(arm_core proc, uint32_t ins, uint32_t address
 	uint8_t res = 0;
 	
 	switch ((l<<2)+(s<<1)+h) {
-        case 1 : // STRH
+        case 1 : // STRH -  Voir doc A4-204
 			if(condition_passed(proc, ins)) {
 				half = (arm_read_register(proc, rd) & 0xFFFF);
     			return arm_write_half(proc, address, half);
 			}
 			return 0; 
-		break;
-        case 2 : // LDRD
+        case 2 : // LDRD -  Voir doc A4-50
 			if (!(rd % 2) || (rd == LR) || !(get_bits(address,1,0) )) {
        			return 0; // Unpredictable
     		}
    			res = arm_read_word(proc, address, &word);
-   			if (!res) arm_write_register(proc, rd, word);
-    		if (!res) res = arm_read_word(proc, address+4, &word);
-   			if (!res) return arm_write_register(proc, rd+1, word);
-		break;
-        case 3 : // STRD
+   			if (!res) {
+                arm_write_register(proc, rd, word);
+    		    res = arm_read_word(proc, address+4, &word);
+            }
+   			return res? 0 : arm_write_register(proc, rd+1, word);
+        case 3 : // STRD -  Voir doc A4-199
 		 	if (!(rd % 2) || (rd == LR) || !(get_bits(address,1,0)) || !(get_bit(address,2))) {
        			return 0; // Unpredictable
    			}
@@ -180,25 +194,19 @@ uint8_t executeInstr_miscellaneous(arm_core proc, uint32_t ins, uint32_t address
     			res = arm_write_word(proc, address+4, word);
     		}
     		return res;
-		break;
-        case 5 : //LDRH
+        case 5 : //LDRH -  Voir doc A4-54
 			res = arm_read_half(proc, address, &half);
-    		if (!res)
-     		   arm_write_register(proc, rd, (uint32_t)half);
+    		if (!res) arm_write_register(proc, rd, (uint32_t)half);
     		return res;
-		break;
         case 6 : // LDRSB
 			return UNDEFINED_INSTRUCTION;  
-		break;
         case 7 : // LDRSH
 			return UNDEFINED_INSTRUCTION; 
-		break;
         default: 
 			return UNDEFINED_INSTRUCTION; 
-		break; 
     }
 }
-
+/* Voir doc A3.11.5 */
 uint8_t executeInstr_word_byte(arm_core proc, uint32_t ins, uint32_t address) {
 	uint8_t byte;
  	uint32_t word;
@@ -207,13 +215,13 @@ uint8_t executeInstr_word_byte(arm_core proc, uint32_t ins, uint32_t address) {
     uint8_t b = get_bit(ins, 22); // Dit si on veut un acces avec un word ou un byte
 
 	if(l) {
- 		if(b) { // LDRB
+ 		if(b) { // LDRB - Voir doc A4-46 
 		 	uint8_t res = arm_read_byte(proc, address, &byte);
 			if (res == -1)
  				arm_write_register(proc, rd, (uint32_t) byte);
 			return res;
  		}
- 		else { // LDR
+ 		else { // LDR -  Voir doc A4-43 
  			if(arm_read_word(proc, address, &word) == 0){
 				if(rd == 15){
 					uint8_t temp = get_bit(word, 0);
@@ -229,12 +237,12 @@ uint8_t executeInstr_word_byte(arm_core proc, uint32_t ins, uint32_t address) {
  		}
  	}
  	else {
- 		if(b) { // STRB
+ 		if(b) { // STRB -  Voir doc A4-195 
 		 	if(condition_passed(proc, ins)) {
  				arm_write_byte(proc, address, arm_read_register(proc, rd) & 0x00FF);
 		 	}
  		}
- 		else { // STR
+ 		else { // STR -  Voir doc A4-193
 			if(condition_passed(proc, ins)) {
          	 	return arm_write_word(proc, address, arm_read_register(proc, rd));
        		}
@@ -251,7 +259,7 @@ uint8_t executeInstr_multiple(arm_core proc, uint32_t ins, uint32_t start_addres
     uint32_t address;
 	uint8_t res = 0;
 
-	if(l) { // LDM
+	if(l) { // LDM -  Voir doc A4-36
 		uint32_t word;
 		uint8_t pc = get_bit(registers, pc_nb);
 		address = start_address;
@@ -278,7 +286,7 @@ uint8_t executeInstr_multiple(arm_core proc, uint32_t ins, uint32_t start_addres
 		assert(end_address == (address - 4));
 
 	}
-	else { // STM
+	else { // STM -  Voir doc A4-189
 		address = start_address;
 		for(i = 0; i <= 15; i++) {
 			if(!res){
@@ -296,7 +304,7 @@ uint8_t executeInstr_multiple(arm_core proc, uint32_t ins, uint32_t start_addres
 
 
 
-
+// Fonction main pour les instructions load et store :  word / byte et miscellaneous
 int arm_load_store(arm_core proc, uint32_t ins) {
 	uint8_t id;
 	uint32_t offset, rn, address, rm, index;
@@ -310,22 +318,20 @@ int arm_load_store(arm_core proc, uint32_t ins) {
     int a;
 
     switch(id) {
-		case 0:  // Part 0 : Miscellaneous
+		case 0:  // Part 1 : Miscellaneous
 			offset = set_offset(ins);
-			load_store_miscellaneous(proc, ins, &address, &rn, rm);
-			return executeInstr_miscellaneous(proc, ins, address);
-		break;
-		case 2:   // Part 1 : Immidiate
-			load_store(proc, ins, &address, &rn, offset);
+			addrmode_load_store_miscellaneous(proc, ins, &address, &rn, rm);
+			return executeInstr_miscellaneous;
+		case 2:   // Part 2 : Immidiate
+			addrmode_load_store(proc, ins, &address, &rn, offset);
 			return executeInstr_word_byte(proc, ins, address);
-		break;
-		case 3:
+		case 3: 
             a = !get_bits(ins, 11, 4);
-            if(a || (!get_bit(ins, 4) && (p(ins) || !w(ins)))) {
-                load_store(proc, ins, &address, &rn, a? rm : (index = set_index(proc, ins, rm)));
+            if(a || (!get_bit(ins, 4) && (p(ins) || !w(ins)))) { // Part 3 : Register
+                addrmode_load_store(proc, ins, &address, &rn, a? rm : (index = set_index(proc, ins, rm)));
 				return executeInstr_word_byte(proc, ins, address);
             }
-		break;
+		    return 0;
 
 		default:
 			return UNDEFINED_INSTRUCTION;
@@ -333,12 +339,12 @@ int arm_load_store(arm_core proc, uint32_t ins) {
 }
 
 
-
+// Fonction main pour les instructions load et store multiple
 int arm_load_store_multiple(arm_core proc, uint32_t ins) {
 	uint32_t rn, start_address, end_address;
     rn = arm_read_register(proc, get_bits(ins, 19, 16));
-	load_store_multiple(proc, ins, &start_address, &end_address, &rn);
-
+	addrmode_load_store_multiple(proc, ins, &start_address, &end_address, &rn);
+    
     return executeInstr_multiple(proc, ins, start_address, end_address);
 }
 
