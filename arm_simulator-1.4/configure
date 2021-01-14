@@ -5875,7 +5875,7 @@ esac
 if test x"$with_arm_host" != xno; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: enabling the Examples directory with $with_arm_host cross-compiler target" >&5
 $as_echo "$as_me: enabling the Examples directory with $with_arm_host cross-compiler target" >&6;}
-  ac_config_files="$ac_config_files Examples/Makefile"
+  ac_config_files="$ac_config_files tests/Makefile"
 
 fi
  if test x"$with_arm_host" != xno; then
@@ -6624,7 +6624,7 @@ do
   case $ac_config_target in
     "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
-    "Examples/Makefile") CONFIG_FILES="$CONFIG_FILES Examples/Makefile" ;;
+    "tests/Makefile") CONFIG_FILES="$CONFIG_FILES tests/Makefile" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;

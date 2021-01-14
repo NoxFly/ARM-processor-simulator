@@ -1,32 +1,74 @@
 /*
-Armator - simulateur de jeu d'instruction ARMv5T ‡ but pÈdagogique
+Armator - simulateur de jeu d'instruction ARMv5T √† but p√©dagogique
 Copyright (C) 2011 Guillaume Huard
 Ce programme est libre, vous pouvez le redistribuer et/ou le modifier selon les
-termes de la Licence Publique GÈnÈrale GNU publiÈe par la Free Software
-Foundation (version 2 ou bien toute autre version ultÈrieure choisie par vous).
+termes de la Licence Publique G√©n√©rale GNU publi√©e par la Free Software
+Foundation (version 2 ou bien toute autre version ult√©rieure choisie par vous).
 
-Ce programme est distribuÈ car potentiellement utile, mais SANS AUCUNE
+Ce programme est distribu√© car potentiellement utile, mais SANS AUCUNE
 GARANTIE, ni explicite ni implicite, y compris les garanties de
-commercialisation ou d'adaptation dans un but spÈcifique. Reportez-vous ‡ la
-Licence Publique GÈnÈrale GNU pour plus de dÈtails.
+commercialisation ou d'adaptation dans un but sp√©cifique. Reportez-vous √† la
+Licence Publique G√©n√©rale GNU pour plus de d√©tails.
 
-Vous devez avoir reÁu une copie de la Licence Publique GÈnÈrale GNU en mÍme
-temps que ce programme ; si ce n'est pas le cas, Ècrivez ‡ la Free Software
+Vous devez avoir re√ßu une copie de la Licence Publique G√©n√©rale GNU en m√™me
+temps que ce programme ; si ce n'est pas le cas, √©crivez √† la Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307,
-…tats-Unis.
+√âtats-Unis.
 
 Contact: Guillaume.Huard@imag.fr
-	 B‚timent IMAG
+	 B√¢timent IMAG
 	 700 avenue centrale, domaine universitaire
-	 38401 Saint Martin d'HËres
+	 38401 Saint Martin d'H√®res
 */
 #ifndef __ARM_LOAD_STORE_H__
 #define __ARM_LOAD_STORE_H__
+
 #include <stdint.h>
 #include "arm_core.h"
 
+#define p(ins)(get_bit(ins, 24))
+#define w(ins)(get_bit(ins, 21))
+
+/* Instructions impl√©ment√©es :
+avec arm_load_store :
+	 word/byte : LDR, STR, LDRB, STRB
+	miscellaneous : LDRH, STRH, LDRD, STRD
+avec arm_load_store_multiple :
+	LDM(1), STM(1)
+*/
+
+/* Retourne TRUE si l‚Äô√©tat des flags N, Z, C et V 
+remplit la condition encod√©e dans l‚Äôargument cond,
+et retourne FALSE dans tous les autres cas */
+uint8_t condition_passed(arm_core proc, uint32_t ins);
+
+/*Effectue une op√©ration en fonction du flag u */
+uint32_t op(uint32_t ins, uint32_t left_op, uint32_t right_op);
+
+/* Permet de conna√Ætre le nombre de bits a 1 sur un nombre pass√© en argument*/
+uint8_t nb_set_bits(uint16_t nb);
+
+/*Sert a trouver l'offset pour les instructions miscellaneous de load_store*/
+uint32_t set_offset(uint32_t ins);
+
+/*Sert a trouver l'index pour les instructions scaled de load_store*/
+uint32_t set_index(arm_core proc, uint32_t ins, uint8_t rm);
+
+/* manipule le mode d'adressage des dites instructions load / store */
+void addrmode_load_store(arm_core proc, uint32_t ins, uint32_t *address, uint32_t *rn, uint32_t add_value);
+void addrmode_load_store_multiple(arm_core proc, uint32_t ins, uint32_t *start_address,uint32_t *end_address, uint32_t *rn);
+void addrmode_load_store_miscellaneous(arm_core proc, uint32_t ins, uint32_t *address, uint32_t *rn, uint32_t offset);
+
+/* execute les dites instructions*/
+uint8_t executeInstr_miscellaneous(arm_core proc, uint32_t ins, uint32_t address);
+uint8_t executeInstr_word_byte(arm_core proc, uint32_t ins, uint32_t address);
+uint8_t executeInstr_multiple(arm_core proc, uint32_t ins, uint32_t start_address, uint32_t end_address);
+
+/* Fonctions main du fichier load_store appell√©es dans arm_instructions */
 int arm_load_store(arm_core p, uint32_t ins);
 int arm_load_store_multiple(arm_core p, uint32_t ins);
 int arm_coprocessor_load_store(arm_core p, uint32_t ins);
+
+
 
 #endif
