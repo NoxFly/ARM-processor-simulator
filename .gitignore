@@ -2,12 +2,8 @@
 .vs/
 **/*.o
 arm_simulator-1.4/Makefile
+arm_simulator-1.4/tests/Makefile
 arm_simulator-1.4/config.log
 arm_simulator-1.4/config.status
 arm_simulator-1.4/.deps/
 arm_simulator-1.4/autom4te.cache/
-arm_simulator-1.4/build-aux/
-arm_simulator-1.4/Examples/
-arm_simulator-1.4/arm_simulator
-arm_simulator-1.4/memory_test
-arm_simulator-1.4/send_irq
