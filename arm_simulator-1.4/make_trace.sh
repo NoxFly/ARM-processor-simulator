@@ -6,13 +6,13 @@ then
 	exit 1
 fi
 
-rm -r Examples/trace
-mkdir Examples/trace
-for file in Examples/*.s
+rm -r tests/trace
+mkdir tests/trace
+for file in tests/*.s
 do
-  base=`expr "$file" : 'Examples/\(.*\)\.s'`
+  base=`expr "$file" : 'tests/\(.*\)\.s'`
   ./arm_simulator --gdb-port 58000 --trace-registers --trace-memory \
-                  >Examples/trace/trace_$base &
-  gdb-multiarch -ex "file Examples/$base" -x gdb_commands --batch
+                  >tests/trace/trace_$base &
+  gdb-multiarch -ex "file tests/$base" -x gdb_commands --batch
 done
-zip -9 -j student/traces.zip Examples/trace/*
+zip -9 -j student/traces.zip tests/trace/*

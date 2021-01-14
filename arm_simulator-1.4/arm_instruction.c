@@ -142,6 +142,7 @@ static int arm_execute_instruction(arm_core p) {
 		case 7:
 			return arm_coprocessor_others_swi(p, inst); // Fin de programme
 	}
+	return 0;
 }
 
 

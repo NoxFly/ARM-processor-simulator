@@ -67,7 +67,7 @@ AS_CASE(["$with_arm_host"],
 
 if test x"$with_arm_host" != xno; then
   AC_MSG_NOTICE([enabling the Examples directory with $with_arm_host cross-compiler target])
-  AC_CONFIG_FILES([Examples/Makefile])
+  AC_CONFIG_FILES([tests/Makefile])
 fi
 AM_CONDITIONAL([HAVE_ARM_COMPILER],[test x"$with_arm_host" != xno])
 

@@ -158,7 +158,7 @@ void addrmode_load_store_miscellaneous(arm_core proc, uint32_t ins, uint32_t *ad
 /* Voir doc A3.11.5 */
 uint8_t executeInstr_miscellaneous(arm_core proc, uint32_t ins, uint32_t address) {
 	uint32_t word;
-	uint8_t byte;
+	//uint8_t byte;
 	uint16_t half;
 	uint8_t rd = get_bits(ins, 15, 12); // Numéro du registre qui sera chargé ou changé
 	uint8_t h = get_bit(ins, 5);
@@ -221,7 +221,7 @@ uint8_t executeInstr_word_byte(arm_core proc, uint32_t ins, uint32_t address) {
  				arm_write_register(proc, rd, (uint32_t) byte);
 			return res;
  		}
- 		else { // LDR -  Voir doc A4-43 
+ 		else { // LDR -  Voir doc A4-43
  			if(arm_read_word(proc, address, &word) == 0){
 				if(rd == 15){
 					uint8_t temp = get_bit(word, 0);
@@ -283,6 +283,7 @@ uint8_t executeInstr_multiple(arm_core proc, uint32_t ins, uint32_t start_addres
 			arm_write_register(proc, pc_nb, word & 0xFFFFFFFE);
 			address += 4;
 		}
+		printf("%x",end_address);
 		assert(end_address == (address - 4));
 
 	}
@@ -321,7 +322,7 @@ int arm_load_store(arm_core proc, uint32_t ins) {
 		case 0:  // Part 1 : Miscellaneous
 			offset = set_offset(ins);
 			addrmode_load_store_miscellaneous(proc, ins, &address, &rn, rm);
-			return executeInstr_miscellaneous;
+			return executeInstr_miscellaneous(proc, ins, address);
 		case 2:   // Part 2 : Immidiate
 			addrmode_load_store(proc, ins, &address, &rn, offset);
 			return executeInstr_word_byte(proc, ins, address);
