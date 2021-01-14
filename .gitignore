@@ -3,6 +3,7 @@
 **/*.o
 arm_simulator-1.4/Makefile
 arm_simulator-1.4/tests/Makefile
+arm_simulator-1.4/Examples/Makefile
 arm_simulator-1.4/config.log
 arm_simulator-1.4/config.status
 arm_simulator-1.4/.deps/
