@@ -47,4 +47,4 @@ Open a second terminal, and do following steps to connect to the server side :
 
 ## License
 
-This code has a [MIT License](https://github.com/NoxFly/ARM-processor-simulator/blob/master/License).
+This code has a [General Public License v3.0 License](https://github.com/NoxFly/ARM-processor-simulator/blob/master/License).
