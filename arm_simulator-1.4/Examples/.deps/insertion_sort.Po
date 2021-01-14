@@ -1,0 +1,64 @@
+insertion_sort.o: insertion_sort.c \
+ /usr/arm-linux-gnueabi/include/stdc-predef.h \
+ /usr/arm-linux-gnueabi/include/stdio.h \
+ /usr/arm-linux-gnueabi/include/bits/libc-header-start.h \
+ /usr/arm-linux-gnueabi/include/features.h \
+ /usr/arm-linux-gnueabi/include/sys/cdefs.h \
+ /usr/arm-linux-gnueabi/include/bits/wordsize.h \
+ /usr/arm-linux-gnueabi/include/bits/long-double.h \
+ /usr/arm-linux-gnueabi/include/gnu/stubs.h \
+ /usr/arm-linux-gnueabi/include/gnu/stubs-soft.h \
+ /usr/lib/gcc-cross/arm-linux-gnueabi/8/include/stddef.h \
+ /usr/lib/gcc-cross/arm-linux-gnueabi/8/include/stdarg.h \
+ /usr/arm-linux-gnueabi/include/bits/types.h \
+ /usr/arm-linux-gnueabi/include/bits/typesizes.h \
+ /usr/arm-linux-gnueabi/include/bits/types/__fpos_t.h \
+ /usr/arm-linux-gnueabi/include/bits/types/__mbstate_t.h \
+ /usr/arm-linux-gnueabi/include/bits/types/__fpos64_t.h \
+ /usr/arm-linux-gnueabi/include/bits/types/__FILE.h \
+ /usr/arm-linux-gnueabi/include/bits/types/FILE.h \
+ /usr/arm-linux-gnueabi/include/bits/types/struct_FILE.h \
+ /usr/arm-linux-gnueabi/include/bits/stdio_lim.h \
+ /usr/arm-linux-gnueabi/include/bits/sys_errlist.h
+
+/usr/arm-linux-gnueabi/include/stdc-predef.h:
+
+/usr/arm-linux-gnueabi/include/stdio.h:
+
+/usr/arm-linux-gnueabi/include/bits/libc-header-start.h:
+
+/usr/arm-linux-gnueabi/include/features.h:
+
+/usr/arm-linux-gnueabi/include/sys/cdefs.h:
+
+/usr/arm-linux-gnueabi/include/bits/wordsize.h:
+
+/usr/arm-linux-gnueabi/include/bits/long-double.h:
+
+/usr/arm-linux-gnueabi/include/gnu/stubs.h:
+
+/usr/arm-linux-gnueabi/include/gnu/stubs-soft.h:
+
+/usr/lib/gcc-cross/arm-linux-gnueabi/8/include/stddef.h:
+
+/usr/lib/gcc-cross/arm-linux-gnueabi/8/include/stdarg.h:
+
+/usr/arm-linux-gnueabi/include/bits/types.h:
+
+/usr/arm-linux-gnueabi/include/bits/typesizes.h:
+
+/usr/arm-linux-gnueabi/include/bits/types/__fpos_t.h:
+
+/usr/arm-linux-gnueabi/include/bits/types/__mbstate_t.h:
+
+/usr/arm-linux-gnueabi/include/bits/types/__fpos64_t.h:
+
+/usr/arm-linux-gnueabi/include/bits/types/__FILE.h:
+
+/usr/arm-linux-gnueabi/include/bits/types/FILE.h:
+
+/usr/arm-linux-gnueabi/include/bits/types/struct_FILE.h:
+
+/usr/arm-linux-gnueabi/include/bits/stdio_lim.h:
+
+/usr/arm-linux-gnueabi/include/bits/sys_errlist.h:
