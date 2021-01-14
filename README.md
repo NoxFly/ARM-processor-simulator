@@ -17,6 +17,10 @@ Dorian Thivolle : Lead developer
 
 All others : developers
 
+We used the agile scrum method to work in group, so we always knew what was the objective of the day, of the week, and we worked simpler, faster.
+
+Read complete [documentation](https://github.com/NoxFly/ARM-processor-simulator/blob/master/documentation.pdf) here.
+
 ## Branches
 
 For each modified file (.c), we created a branch.
@@ -25,17 +29,15 @@ We're merging each of these branches on the dev's one, to test if it is working,
 
 ## Execute the code
 
-The given code in this repository isn't complete. We've added some folders in the gitignore, including the Makefile, because these are specific configured folders / file depending of user's system.
-
-If you have the missing folders + Makefile, you can execute the code doing the following steps :
+To execute our code, follow these steps :
 
 - __Ensure you have a cross compiler__: install it with these two cli commands :
     - `sudo apt-get install libc6-armel-cross libc6-dev-armel-cross binutils-arm-linux-gnueabi libncurses5-dev build-essential bison flex libssl-dev bc`
     - `sudo apt-get install gcc-arm-linux-gnueabi g++-arm-linux-gnueabi`
-- __Configure and compile the code__ : go on `arm_simulator-1.4` folder, then write :
+- __Configure and compile the code__ : go on `arm_simulator-1.4/` folder, then write :
     - `./configure CFLAGS='-Wall -Werror -g'`
     - then if it succeed, write `make`
-- Finally, __execute the created executable__ : `./arm_simulator`
+- Finally, __execute the created executable__ : `./arm_simulator --trace-memory --trace-register`
 
 Once the simulator is started, you'll see 2 port's numbers.
 
